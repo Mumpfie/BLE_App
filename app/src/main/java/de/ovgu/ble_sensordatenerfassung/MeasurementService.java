@@ -19,6 +19,7 @@ import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
+import android.nfc.Tag;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
@@ -49,12 +50,12 @@ public class MeasurementService extends Service {
     private static BluetoothGattCharacteristic mEfficiencyCharacterisitc;
 
     // UUIDs for the service and characteristics that the custom CapSenseLED service uses
-    private final static String measurementServiceUUID =        "5D8EEE9C-F629-4429-A328-BAF6ECB10BBB";
-    public  final static String voltageCharacterisitcUUID =     "4B4369F0-0929-4AF2-90EE-9BE9DF9779FC";
-    public  final static String currentCharacterisitcUUID =     "E570157C-65B9-45FF-83FF-0D963F8F7056";
-    public  final static String speedCharacterisitcUUID =       "E570157C-65B9-45FF-83FF-0D963F8F7056";
-    public  final static String torqueCharacterisitcUUID =      "E570157C-65B9-45FF-83FF-0D963F8F7056";
-    public  final static String efficiencyCharacterisitcUUID =  "E570157C-65B9-45FF-83FF-0D963F8F7056";
+    private final static String measurementServiceUUID =        "5d8eee9c-f629-4429-a328-baf6ecb10bbb";
+    public  final static String voltageCharacterisitcUUID =     "4b4369f0-0929-4af2-90ee-9be9df9779fc";
+    public  final static String currentCharacterisitcUUID =     "e570157c-65b9-45ff-83ff-0d963f8f7056";
+    public  final static String speedCharacterisitcUUID =       "d0524569-7ad1-4a2c-9b41-a62977af90f1";
+    public  final static String torqueCharacterisitcUUID =      "0506ecfe-b5e1-43df-8129-dcda57e2d1b0";
+    public  final static String efficiencyCharacterisitcUUID =  "20b0b221-492e-4c1a-90d6-4b8a12f91a43";
     //private final static String CccdUUID =                   "00002902-0000-1000-8000-00805f9b34fb";
 
     // Variables to keep track of the LED switch state and CapSense Value
@@ -66,15 +67,15 @@ public class MeasurementService extends Service {
 
     // Actions used during broadcasts to the main activity
     public final static String ACTION_BLESCAN_CALLBACK =
-            "de.ovgu.bluetooth.le.ACTION_BLESCAN_CALLBACK";
+            "de.ovgu.ble_sensordatenerfassung.ACTION_BLESCAN_CALLBACK";
     public final static String ACTION_CONNECTED =
-            "de.ovgu.bluetooth.le.ACTION_CONNECTED";
+            "de.ovgu.ble_sensordatenerfassung.ACTION_CONNECTED";
     public final static String ACTION_DISCONNECTED =
-            "de.ovgu.bluetooth.le.ACTION_DISCONNECTED";
+            "de.ovgu.ble_sensordatenerfassung.ACTION_DISCONNECTED";
     public final static String ACTION_SERVICES_DISCOVERED =
-            "de.ovgu.bluetooth.le.ACTION_SERVICES_DISCOVERED";
+            "de.ovgu.ble_sensordatenerfassung.ACTION_SERVICES_DISCOVERED";
     public final static String ACTION_DATA_RECEIVED =
-            "de.ovgu.bluetooth.le.ACTION_DATA_RECEIVED";
+            "de.ovgu.ble_sensordatenerfassung.ACTION_DATA_RECEIVED";
 
     public MeasurementService() {
     }
@@ -132,6 +133,9 @@ public class MeasurementService extends Service {
         UUID measurementService = UUID.fromString(measurementServiceUUID);
         UUID[] measurementServiceArray = {measurementService};
 
+        mBluetoothAdapter.startLeScan(measurementServiceArray, mLeScanCallback);
+
+        /*
         // Use old scan method for versions older than lollipop
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             //noinspection deprecation
@@ -150,6 +154,7 @@ public class MeasurementService extends Service {
             filters.add(filter);
             mLEScanner.startScan(filters, settings, mScanCallback);
         }
+        */
     }
 
     /**
@@ -271,11 +276,12 @@ public class MeasurementService extends Service {
         mBluetoothGatt.readCharacteristic(mEfficiencyCharacterisitc);
     }
 
-    public void readCharakteristics() {
+    public void readCharacteristics() {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
+
         mBluetoothGatt.readCharacteristic(mVoltageCharacterisitc);
         mBluetoothGatt.readCharacteristic(mCurrentCharacterisitc);
         mBluetoothGatt.readCharacteristic(mSpeedCharacterisitc);
@@ -286,6 +292,8 @@ public class MeasurementService extends Service {
         // Notify the main activity that new data is available
         broadcastUpdate(ACTION_DATA_RECEIVED);
     }
+
+
 
     public float getVoltageValue() {
         return mVoltageValue;
@@ -320,12 +328,13 @@ public class MeasurementService extends Service {
                     mLeDevice = device;
                     //noinspection declaration
                     mBluetoothAdapter.stopLeScan(mLeScanCallback); // Stop scanning after the first device is found
+                    Log.v(TAG, "Device found.");
                     broadcastUpdate(ACTION_BLESCAN_CALLBACK); // Tell the main activity that a device has been found
                 }
             };
 
     /**
-     * Implements the callback for when scanning for devices has faound a device with
+     * Implements the callback for when scanning for devices has found a device with
      * the service we are looking for.
      *
      * This is the callback for BLE scanning for LOLLIPOP and later
@@ -376,7 +385,7 @@ public class MeasurementService extends Service {
             mEfficiencyCharacterisitc = mService.getCharacteristic(UUID.fromString(efficiencyCharacterisitcUUID));
 
             // Read the current values from the device
-            readCharakteristics();
+            readCharacteristics();
 
             // Broadcast that service/characteristic/descriptor discovery is done
             broadcastUpdate(ACTION_SERVICES_DISCOVERED);

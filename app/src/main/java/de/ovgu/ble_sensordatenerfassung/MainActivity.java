@@ -5,6 +5,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -59,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
         /**
-         * This is called when the PSoCCapSenseLedService is connected
+         * This is called when the MeasurementService is connected
          *
          * @param componentName the component name of the service that has been connected
          * @param service service being bound
@@ -70,6 +71,9 @@ public class MainActivity extends AppCompatActivity {
             mMeasurementService = ((MeasurementService.LocalBinder) service).getService();
             mServiceConnected = true;
             mMeasurementService.initialize();
+            mMeasurementService.scan();
+            /* After this we wait for the scan callback to detect that a device has been found */
+            /* The callback broadcasts a message which is picked up by the mGattUpdateReceiver */
         }
 
         /**
@@ -88,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
     private Runnable readRoutine = new Runnable() {
         @Override
         public void run() {
-            mMeasurementService.readCurrentCharacteristic();
+            mMeasurementService.readCharacteristics();
 
             readHandler.postDelayed(this, 1000);
         }
@@ -226,18 +230,16 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d(TAG, "Bluetooth is Enabled");
 
+        /*
         if(mServiceConnected) {
             mMeasurementService.scan();
+            Log.v(TAG, "Scanning for devices.");
+        } else {
+            Log.v(TAG, "No service connected.");
         }
+        */
         /* After this we wait for the scan callback to detect that a device has been found */
         /* The callback broadcasts a message which is picked up by the mGattUpdateReceiver */
-
-
-
-        /* This will discover the service and the characteristics */
-        mMeasurementService.discoverServices();
-        /* After this we wait for the gatt callback to report the services and characteristics */
-        /* That event broadcasts a message which is picked up by the mGattUpdateReceiver */
     }
 
     /**
@@ -252,6 +254,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * This method handles the read button
+     */
+    public void updateCharacteristics(View view) {
+        mMeasurementService.readCharacteristics();
+    }
+
+    /**
      * Listener for BLE event broadcasts
      */
     private final BroadcastReceiver mBleUpdateReceiver = new BroadcastReceiver() {
@@ -260,12 +269,14 @@ public class MainActivity extends AppCompatActivity {
             final String action = intent.getAction();
             switch (action) {
                 case MeasurementService.ACTION_BLESCAN_CALLBACK:
+                    Log.d(TAG, "Connecting to GATT");
                     mMeasurementService.connect();
                     /* After this we wait for the gatt callback to report the device is connected */
                     /* That event broadcasts a message which is picked up by the mGattUpdateReceiver */
                     break;
 
                 case MeasurementService.ACTION_CONNECTED:
+                    Log.d(TAG, "Trying to Discovering Services");
                     /* This will discover the service and the characteristics */
                     mMeasurementService.discoverServices();
                     /* After this we wait for the gatt callback to report the services and characteristics */
@@ -273,7 +284,7 @@ public class MainActivity extends AppCompatActivity {
                     start_button.setEnabled(false);
                     stop_button.setEnabled(true);
                     /* This will start the repeated read task*/
-                    readHandler.post(readRoutine);
+                    //readHandler.post(readRoutine);
                     break;
 
                 case MeasurementService.ACTION_DISCONNECTED:
@@ -281,7 +292,7 @@ public class MainActivity extends AppCompatActivity {
                     start_button.setEnabled(true);
                     mConnectState = false;
                     /* This will stop the repeated read task*/
-                    readHandler.removeCallbacks(readRoutine);
+                    //readHandler.removeCallbacks(readRoutine);
                     Log.d(TAG, "Disconnected");
                     break;
 
