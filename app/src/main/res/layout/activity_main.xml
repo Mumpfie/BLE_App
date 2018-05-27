@@ -7,69 +7,77 @@
     tools:context=".MainActivity">
 
     <TextView
-        android:id="@+id/voltage_view"
-        android:layout_width="0dp"
+        android:id="@+id/efficiency_view"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="Spannung"
+        android:text="@string/Wirkungsgrad"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textSize="42sp"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/torque_view" />
 
     <TextView
-        android:id="@+id/current_view"
-        android:layout_width="0dp"
+        android:id="@+id/torque_view"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="Strom"
+        android:text="@string/Drehmoment"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textSize="42sp"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/voltage_view" />
+        app:layout_constraintTop_toBottomOf="@+id/speed_view" />
 
     <TextView
         android:id="@+id/speed_view"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="Drehzahl"
+        android:text="@string/Drehzahl"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textSize="42sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/current_view" />
 
     <TextView
-        android:id="@+id/torque_view"
-        android:layout_width="0dp"
+        android:id="@+id/current_view"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="Drehmoment"
+        android:text="@string/Strom"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textSize="42sp"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/speed_view" />
+        app:layout_constraintTop_toBottomOf="@+id/voltage_view" />
 
     <TextView
-        android:id="@+id/efficiency_view"
-        android:layout_width="0dp"
+        android:id="@+id/voltage_view"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="Wirkungsgrad"
+        android:text="@string/Spannung"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textSize="42sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/torque_view" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/start_button"
@@ -80,7 +88,7 @@
         android:layout_marginStart="8dp"
         android:enabled="true"
         android:onClick="startBluetooth"
-        android:text="Starte Verbindung"
+        android:text="@string/Starte_Verbindung"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/stop_button"
         app:layout_constraintStart_toStartOf="parent" />
@@ -94,22 +102,9 @@
         android:layout_marginStart="4dp"
         android:enabled="false"
         android:onClick="stopBluetooth"
-        android:text="Beende Verbindung"
+        android:text="@string/Beende_Verbindung"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/start_button" />
-
-    <Button
-        android:id="@+id/read_button"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:onClick="updateCharacteristics"
-        android:text="Lese Daten"
-        app:layout_constraintBottom_toTopOf="@+id/start_button"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
 
 </android.support.constraint.ConstraintLayout>

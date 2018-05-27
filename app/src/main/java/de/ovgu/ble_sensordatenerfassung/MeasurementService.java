@@ -30,6 +30,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.Arrays;
 
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class MeasurementService extends Service {
@@ -58,12 +59,12 @@ public class MeasurementService extends Service {
     public  final static String efficiencyCharacterisitcUUID =  "20b0b221-492e-4c1a-90d6-4b8a12f91a43";
     //private final static String CccdUUID =                   "00002902-0000-1000-8000-00805f9b34fb";
 
-    // Variables to keep track of the LED switch state and CapSense Value
-    private static float mVoltageValue = 0.0F;
-    private static float mCurrentValue = 0.0F;
-    private static int mSpeedValue = 0;
-    private static float mTorqueValue = 0.0F;
-    private static int mEfficiencyValue = 0;
+    // Variables to keep track of the values
+    private static String mVoltageValue = "0.0";
+    private static String mCurrentValue = "0.0";
+    private static String mSpeedValue = "0";
+    private static String mTorqueValue = "0.0";
+    private static String mEfficiencyValue = "0";
 
     // Actions used during broadcasts to the main activity
     public final static String ACTION_BLESCAN_CALLBACK =
@@ -295,24 +296,39 @@ public class MeasurementService extends Service {
 
 
 
-    public float getVoltageValue() {
+    public String getVoltageValue() {
         return mVoltageValue;
     }
 
-    public float getCurrentValue() {
+    public String getCurrentValue() {
         return mCurrentValue;
     }
 
-    public int getSpeedValue() {
+    public String getSpeedValue() {
         return mSpeedValue;
     }
 
-    public float getTorqueValue() {
+    public String getTorqueValue() {
         return mTorqueValue;
     }
 
-    public int getEfficiencyValue() {
+    public String getEfficiencyValue() {
         return mEfficiencyValue;
+    }
+
+    /* Enables notifications*/
+    public void enableNotifications() {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+
+        mBluetoothGatt.setCharacteristicNotification(mVoltageCharacterisitc, true);
+        mBluetoothGatt.setCharacteristicNotification(mCurrentCharacterisitc, true);
+        mBluetoothGatt.setCharacteristicNotification(mSpeedCharacterisitc, true);
+        mBluetoothGatt.setCharacteristicNotification(mTorqueCharacterisitc, true);
+        mBluetoothGatt.setCharacteristicNotification(mEfficiencyCharacterisitc, true);
+        Log.v(TAG, "Notifications enabled.");
     }
 
     /**
@@ -403,23 +419,78 @@ public class MeasurementService extends Service {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 // Verify that the read was the LED state
                 String uuid = characteristic.getUuid().toString();
-                final byte[] data = characteristic.getValue();
-                ByteBuffer buf = ByteBuffer.wrap(data);
 
                 if(uuid.equals(voltageCharacterisitcUUID)) {
-                    mVoltageValue = buf.getFloat();
+                    mVoltageValue = characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_FLOAT,0).toString();
                 }else if(uuid.equals(currentCharacterisitcUUID)) {
-                    mCurrentValue = buf.getFloat();
+                    mCurrentValue = characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_FLOAT,0).toString();
                 }else if(uuid.equals(speedCharacterisitcUUID)) {
-                    mSpeedValue = buf.getInt();
+                    mSpeedValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT16,0).toString();
                 }else if(uuid.equals(torqueCharacterisitcUUID)) {
-                    mTorqueValue = buf.getFloat();
+                    mTorqueValue = characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_FLOAT,0).toString();
                 }else if(uuid.equals(efficiencyCharacterisitcUUID)) {
-                    mEfficiencyValue = buf.getInt();
+                    mEfficiencyValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0).toString();
                 }
             }
         }
+
+        /**
+         * This is called when a characteristic with notify set changes.
+         * It broadcasts an update to the main activity with the changed data.
+         *
+         * @param gatt The GATT database object
+         * @param characteristic The characteristic that was changed
+         */
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt,
+                                            BluetoothGattCharacteristic characteristic) {
+
+            String uuid = characteristic.getUuid().toString();
+
+            byte[] tmp;
+
+            // New values are stored
+            switch(uuid)
+            {
+                case voltageCharacterisitcUUID:
+                    mVoltageValue = floatCharacteristicToString(characteristic.getValue());
+                    break;
+
+                case currentCharacterisitcUUID:
+                    mCurrentValue = floatCharacteristicToString(characteristic.getValue());
+                    break;
+
+                case speedCharacterisitcUUID:
+                    mSpeedValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT16,0).toString();
+                    break;
+
+                case torqueCharacterisitcUUID:
+                    mTorqueValue = floatCharacteristicToString(characteristic.getValue());
+                    break;
+
+                case efficiencyCharacterisitcUUID:
+                    mEfficiencyValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0).toString();
+                    break;
+            }
+
+            // Notify the main activity that new data is available
+            broadcastUpdate(ACTION_DATA_RECEIVED);
+        }
     }; // End of GATT event callback methods
+
+    private String floatCharacteristicToString(byte[] b){
+        byte tmp;
+        tmp = b[0];
+        b[0] = b[3];
+        b[3] = tmp;
+        tmp = b[1];
+        b[1] = b[2];
+        b[2] = tmp;
+
+        ByteBuffer buf = ByteBuffer.wrap(b);
+        return String.valueOf(buf.getFloat());
+
+    }
 
     /**
      * Sends a broadcast to the listener in the main activity.

@@ -88,16 +88,6 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    // Define read routine to be called every second
-    private Runnable readRoutine = new Runnable() {
-        @Override
-        public void run() {
-            mMeasurementService.readCharacteristics();
-
-            readHandler.postDelayed(this, 1000);
-        }
-    };
-
     /**
      * This is called when the main activity is first created
      *
@@ -254,13 +244,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * This method handles the read button
-     */
-    public void updateCharacteristics(View view) {
-        mMeasurementService.readCharacteristics();
-    }
-
-    /**
      * Listener for BLE event broadcasts
      */
     private final BroadcastReceiver mBleUpdateReceiver = new BroadcastReceiver() {
@@ -276,46 +259,53 @@ public class MainActivity extends AppCompatActivity {
                     break;
 
                 case MeasurementService.ACTION_CONNECTED:
-                    Log.d(TAG, "Trying to Discovering Services");
-                    /* This will discover the service and the characteristics */
-                    mMeasurementService.discoverServices();
-                    /* After this we wait for the gatt callback to report the services and characteristics */
-                    /* That event broadcasts a message which is picked up by the mGattUpdateReceiver */
-                    start_button.setEnabled(false);
-                    stop_button.setEnabled(true);
-                    /* This will start the repeated read task*/
-                    //readHandler.post(readRoutine);
+                    // If statement necessary because GATT_CONNECTED action can be triggered when sending notifications
+                    if(!mConnectState) {
+                        Log.d(TAG, "Trying to Discovering Services");
+                        /* This will discover the service and the characteristics */
+                        mMeasurementService.discoverServices();
+                        /* After this we wait for the gatt callback to report the services and characteristics */
+                        /* That event broadcasts a message which is picked up by the mGattUpdateReceiver */
+                        start_button.setEnabled(false);
+                        stop_button.setEnabled(true);
+                        /* This will start the repeated read task*/
+                        //readHandler.post(readRoutine);
+                    }
                     break;
 
                 case MeasurementService.ACTION_DISCONNECTED:
                     stop_button.setEnabled(false);
                     start_button.setEnabled(true);
                     mConnectState = false;
+                    /* Necessary to enable reconnect */
+                    unbindService(mServiceConnection);
                     /* This will stop the repeated read task*/
                     //readHandler.removeCallbacks(readRoutine);
                     Log.d(TAG, "Disconnected");
                     break;
 
                 case MeasurementService.ACTION_SERVICES_DISCOVERED:
-
                     Log.d(TAG, "Services Discovered");
+
+                    /* Enable notifications*/
+                    mMeasurementService.enableNotifications();
                     break;
 
                 case MeasurementService.ACTION_DATA_RECEIVED:
-                    // This is called after a read completes
-                    String Voltage = Float.toString(mMeasurementService.getVoltageValue()) + " V";
+                    // This is called after a notify or read completes
+                    String Voltage = mMeasurementService.getVoltageValue() + " V";
                     mVoltageValue.setText(Voltage);
 
-                    String Current = Float.toString(mMeasurementService.getCurrentValue()) + " A";
+                    String Current = mMeasurementService.getCurrentValue() + " A";
                     mCurrentValue.setText(Current);
 
-                    String Speed = Integer.toString(mMeasurementService.getSpeedValue()) + " min\u207B\u00B9";
+                    String Speed = mMeasurementService.getSpeedValue() + " min\u207B\u00B9";
                     mSpeedValue.setText(Speed);
 
-                    String Torque = Float.toString(mMeasurementService.getTorqueValue()) + " Nm";
+                    String Torque = mMeasurementService.getTorqueValue() + " Nm";
                     mTorqueValue.setText(Torque);
 
-                    String Efficiency = Integer.toString(mMeasurementService.getEfficiencyValue()) + " \u0025";
+                    String Efficiency = mMeasurementService.getEfficiencyValue() + " \u0025";
                     mEfficiencyValue.setText(Efficiency);
 
                     break;

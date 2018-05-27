@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">BLE_Sensordatenerfassung</string>
+
+    <string name="Spannung">Spannung</string>
+    <string name="Strom">Strom</string>
+    <string name="Drehzahl">Drehzahl</string>
+    <string name="Drehmoment">Drehmoment</string>
+    <string name="Wirkungsgrad">Wirkungsgrad</string>
+    <string name="Starte_Verbindung">Starte Verbindung</string>
+    <string name="Beende_Verbindung">Beende Verbindung</string>
 </resources>
