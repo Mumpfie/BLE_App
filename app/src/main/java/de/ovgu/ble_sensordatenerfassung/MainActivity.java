@@ -24,7 +24,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ToggleButton;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -40,8 +43,11 @@ public class MainActivity extends AppCompatActivity {
     private static TextView mSpeedValue;
     private static TextView mTorqueValue;
     private static TextView mEfficiencyValue;
-    private static Button start_button;
-    private static Button stop_button;
+    //private static Button start_button;
+    //private static Button stop_button;
+    private static Button start_stop_button;
+
+    private boolean toggleState = true;
 
     // Variables to manage BLE connection
     private static boolean mConnectState;
@@ -107,8 +113,22 @@ public class MainActivity extends AppCompatActivity {
         mEfficiencyValue = (TextView) findViewById(R.id.efficiency_view);
 
         // Set up a variables for accessing the buttons
-        start_button = (Button) findViewById(R.id.start_button);
-        stop_button = (Button) findViewById(R.id.stop_button);
+        //start_button = (Button) findViewById(R.id.start_button);
+        //stop_button = (Button) findViewById(R.id.stop_button);
+        start_stop_button = (Button) findViewById(R.id.start_stop_button);
+
+        start_stop_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(toggleState)
+                {
+                    startBluetooth(v);
+                }else{
+                    stopBluetooth(v);
+                }
+            }
+        });
+
 
         // Initialize service and connection state variable
         mServiceConnected = false;
@@ -213,21 +233,18 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BLE);
         }
 
-        // Start the BLE Service
-        Log.d(TAG, "Starting BLE Service");
-        Intent gattServiceIntent = new Intent(this, MeasurementService.class);
-        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+        while(!mBluetoothAdapter.isEnabled()){}
 
-        Log.d(TAG, "Bluetooth is Enabled");
-
-        /*
-        if(mServiceConnected) {
+        if(!mServiceConnected) {
+            // Start the BLE Service
+            Log.d(TAG, "Starting BLE Service");
+            Intent gattServiceIntent = new Intent(this, MeasurementService.class);
+            bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+        } else {
             mMeasurementService.scan();
             Log.v(TAG, "Scanning for devices.");
-        } else {
-            Log.v(TAG, "No service connected.");
         }
-        */
+
         /* After this we wait for the scan callback to detect that a device has been found */
         /* The callback broadcasts a message which is picked up by the mGattUpdateReceiver */
     }
@@ -261,26 +278,33 @@ public class MainActivity extends AppCompatActivity {
                 case MeasurementService.ACTION_CONNECTED:
                     // If statement necessary because GATT_CONNECTED action can be triggered when sending notifications
                     if(!mConnectState) {
+                        mConnectState = true;
                         Log.d(TAG, "Trying to Discovering Services");
                         /* This will discover the service and the characteristics */
                         mMeasurementService.discoverServices();
                         /* After this we wait for the gatt callback to report the services and characteristics */
                         /* That event broadcasts a message which is picked up by the mGattUpdateReceiver */
-                        start_button.setEnabled(false);
-                        stop_button.setEnabled(true);
+                        toggleState = false;
+                        start_stop_button.setText("Beende Verbindung");
+                        //start_button.setEnabled(false);
+                        //stop_button.setEnabled(true);
                         /* This will start the repeated read task*/
                         //readHandler.post(readRoutine);
+                        Toast.makeText(getApplicationContext(), "Verbindung hergestellt", Toast.LENGTH_SHORT).show();
                     }
                     break;
 
                 case MeasurementService.ACTION_DISCONNECTED:
-                    stop_button.setEnabled(false);
-                    start_button.setEnabled(true);
+                    toggleState = true;
+                    start_stop_button.setText("Starte Verbindung");
+                    //stop_button.setEnabled(false);
+                    //start_button.setEnabled(true);
                     mConnectState = false;
                     /* Necessary to enable reconnect */
                     unbindService(mServiceConnection);
                     /* This will stop the repeated read task*/
                     //readHandler.removeCallbacks(readRoutine);
+                    Toast.makeText(getApplicationContext(), "Verbindung beendet", Toast.LENGTH_SHORT).show();
                     Log.d(TAG, "Disconnected");
                     break;
 

@@ -134,9 +134,9 @@ public class MeasurementService extends Service {
         UUID measurementService = UUID.fromString(measurementServiceUUID);
         UUID[] measurementServiceArray = {measurementService};
 
-        mBluetoothAdapter.startLeScan(measurementServiceArray, mLeScanCallback);
+        //mBluetoothAdapter.startLeScan(measurementServiceArray, mLeScanCallback);
 
-        /*
+
         // Use old scan method for versions older than lollipop
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             //noinspection deprecation
@@ -155,7 +155,7 @@ public class MeasurementService extends Service {
             filters.add(filter);
             mLEScanner.startScan(filters, settings, mScanCallback);
         }
-        */
+
     }
 
     /**
@@ -360,6 +360,7 @@ public class MeasurementService extends Service {
         public void onScanResult(int callbackType, ScanResult result) {
             mLeDevice = result.getDevice();
             mLEScanner.stopScan(mScanCallback); // Stop scanning after the first device is found
+            Log.v(TAG, "Device found.");
             broadcastUpdate(ACTION_BLESCAN_CALLBACK); // Tell the main activity that a device has been found
         }
     };
@@ -425,11 +426,11 @@ public class MeasurementService extends Service {
                 }else if(uuid.equals(currentCharacterisitcUUID)) {
                     mCurrentValue = characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_FLOAT,0).toString();
                 }else if(uuid.equals(speedCharacterisitcUUID)) {
-                    mSpeedValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT16,0).toString();
+                    mSpeedValue = characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_FLOAT,0).toString();
                 }else if(uuid.equals(torqueCharacterisitcUUID)) {
                     mTorqueValue = characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_FLOAT,0).toString();
                 }else if(uuid.equals(efficiencyCharacterisitcUUID)) {
-                    mEfficiencyValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0).toString();
+                    mEfficiencyValue = characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_FLOAT,0).toString();
                 }
             }
         }
@@ -448,28 +449,29 @@ public class MeasurementService extends Service {
             String uuid = characteristic.getUuid().toString();
 
             byte[] tmp;
+            float floatTmp = characteristicToFloat(characteristic.getValue());
 
             // New values are stored
             switch(uuid)
             {
                 case voltageCharacterisitcUUID:
-                    mVoltageValue = floatCharacteristicToString(characteristic.getValue());
+                    mVoltageValue = String.format("%.1f",floatTmp);
                     break;
 
                 case currentCharacterisitcUUID:
-                    mCurrentValue = floatCharacteristicToString(characteristic.getValue());
+                    mCurrentValue = String.format("%.1f",floatTmp);
                     break;
 
                 case speedCharacterisitcUUID:
-                    mSpeedValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT16,0).toString();
+                    mSpeedValue = String.format("%.0f",floatTmp);
                     break;
 
                 case torqueCharacterisitcUUID:
-                    mTorqueValue = floatCharacteristicToString(characteristic.getValue());
+                    mTorqueValue = String.format("%.1f",floatTmp);
                     break;
 
                 case efficiencyCharacterisitcUUID:
-                    mEfficiencyValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0).toString();
+                    mEfficiencyValue = String.format("%.1f",floatTmp);
                     break;
             }
 
@@ -478,7 +480,7 @@ public class MeasurementService extends Service {
         }
     }; // End of GATT event callback methods
 
-    private String floatCharacteristicToString(byte[] b){
+    private float characteristicToFloat(byte[] b){
         byte tmp;
         tmp = b[0];
         b[0] = b[3];
@@ -488,7 +490,7 @@ public class MeasurementService extends Service {
         b[2] = tmp;
 
         ByteBuffer buf = ByteBuffer.wrap(b);
-        return String.valueOf(buf.getFloat());
+        return buf.getFloat();
 
     }
 
