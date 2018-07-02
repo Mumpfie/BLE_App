@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">BLE_Sensordatenerfassung</string>
+    <string name="app_name">BLE Prüfstand</string>
 
     <string name="Spannung">Spannung</string>
     <string name="Strom">Strom</string>
