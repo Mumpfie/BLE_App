@@ -34,8 +34,6 @@ public class MainActivity extends AppCompatActivity {
     // TAG is used for informational messages
     private final static String TAG = MainActivity.class.getSimpleName();
 
-    // Handler used to repeat the read task
-    Handler readHandler = new Handler();
 
     // Variables to access objects from the layout such as buttons, switches, values
     private static TextView mVoltageValue;
@@ -302,6 +300,7 @@ public class MainActivity extends AppCompatActivity {
                     mConnectState = false;
                     /* Necessary to enable reconnect */
                     unbindService(mServiceConnection);
+                    mServiceConnected = false;
                     /* This will stop the repeated read task*/
                     //readHandler.removeCallbacks(readRoutine);
                     Toast.makeText(getApplicationContext(), "Verbindung beendet", Toast.LENGTH_SHORT).show();
