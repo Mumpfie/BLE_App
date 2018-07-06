@@ -19,7 +19,8 @@
         android:theme="@style/FMB"
         android:screenOrientation="portrait">
         <activity android:name=".MainActivity"
-            android:theme="@style/FMB">
+            android:theme="@style/FMB"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
